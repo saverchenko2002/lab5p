@@ -5,8 +5,6 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 
 public class MainFrame extends JFrame {
@@ -44,88 +42,62 @@ public class MainFrame extends JFrame {
         graphics.addMenuListener(new GraphicsMenuListener());
         JMenuItem open = file.add(new JMenuItem("Открыть файл с графиком"));
         open.setAccelerator(KeyStroke.getKeyStroke("ctrl O"));
-        open.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (fileChooser == null) {
-                    fileChooser = new JFileChooser();
-                    fileChooser.setCurrentDirectory(new File("C:\\Users\\SergeySaber\\IdeaProjects\\lab5p"));
-                    FileNameExtensionFilter filter = new FileNameExtensionFilter("bin files", "bin");
-                    fileChooser.setFileFilter(filter);
-                }
-                if (fileChooser.showOpenDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION)
-                    openGraphics(fileChooser.getSelectedFile());
+        open.addActionListener(e -> {
+            if (fileChooser == null) {
+                fileChooser = new JFileChooser();
+                fileChooser.setCurrentDirectory(new File("C:\\Users\\SergeySaber\\IdeaProjects\\lab5p"));
+                FileNameExtensionFilter filter = new FileNameExtensionFilter("bin files", "bin");
+                fileChooser.setFileFilter(filter);
             }
+            if (fileChooser.showOpenDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION)
+                openGraphics(fileChooser.getSelectedFile());
         });
 
         JMenuItem close = file.add(new JMenuItem("Выход"));
         close.setAccelerator(KeyStroke.getKeyStroke("ctrl E"));
-        close.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                System.exit(0);
-            }
-        });
+        close.addActionListener(e -> System.exit(0));
 
         showAxisItem = graphics.add(new JCheckBoxMenuItem("Показать оси"));
         showAxisItem.setSelected(true);
-        showAxisItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                display.setShowAxis(showAxisItem.isSelected());
-            }
-        });
+        showAxisItem.addActionListener(e -> display.setShowAxis(showAxisItem.isSelected()));
 
         modifyItem = graphics.add(new JCheckBoxMenuItem("Модификация отображения"));
-        modifyItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                display.setDefaultCondition(modifyItem.isSelected());
-            }
-        });
+        modifyItem.addActionListener(e -> display.setDefaultCondition(modifyItem.isSelected()));
 
         modifyConditionItem = graphics.add(new JCheckBoxMenuItem("Модификация отображения с условием"));
-        modifyConditionItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                display.setModifiedCondition(modifyConditionItem.isSelected());
-            }
-        });
+        modifyConditionItem.addActionListener(e -> display.setModifiedCondition(modifyConditionItem.isSelected()));
 
         turnLeftItem = graphics.add(new JCheckBoxMenuItem("Поворот влево на 90°"));
-        turnLeftItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                display.setTurnGraph(turnLeftItem.isSelected());
-            }
-        });
+        turnLeftItem.addActionListener(e -> display.setTurnGraph(turnLeftItem.isSelected()));
 
         showGridItem = graphics.add(new JCheckBoxMenuItem("Показать сетку"));
-        showGridItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (showGridItem.isSelected()) {
-                    String valueX = JOptionPane.showInputDialog(MainFrame.this,
-                            "Введите сколько знаков после запятой в Х:\nminX-" + display.getIncrX(), "Ограничение Х", JOptionPane.QUESTION_MESSAGE);
-                    String valueY = JOptionPane.showInputDialog(MainFrame.this,
-                            "Введите сколько знаков после запятой в Y:\nminY-" + display.getIncrY(), "Ограничение Y", JOptionPane.QUESTION_MESSAGE);
-                    if ((display.getIncrXDouble().intValue()==0 && display.getIncrXDouble()>Double.parseDouble(valueX) )||
-                            (display.getIncrYDouble().intValue()==0 && display.getIncrYDouble()>Double.parseDouble(valueY))) {
-                        JOptionPane.showMessageDialog(MainFrame.this,
-                                "В минимальном значении знак на дальнем разряде", "Ошибочный ввод числа знаков", JOptionPane.WARNING_MESSAGE);
-                        showGridItem.setSelected(false);
-                    }
-                    else {
-                        display.setXDigits(Integer.parseInt(valueX));
-                        display.setYDigits(Integer.parseInt(valueY));
-                        display.setShowGrid(showGridItem.isSelected());
-                    }
+        showGridItem.addActionListener(e -> {
+            if (showGridItem.isSelected()) {
+                String valueX = JOptionPane.showInputDialog(MainFrame.this,
+                        "Введите сколько знаков после запятой в Х:\nminX-" + display.getIncrX(), "Ограничение Х", JOptionPane.QUESTION_MESSAGE);
+                String valueY = JOptionPane.showInputDialog(MainFrame.this,
+                        "Введите сколько знаков после запятой в Y:\nminY-" + display.getIncrY(), "Ограничение Y", JOptionPane.QUESTION_MESSAGE);
+                if ((display.getIncrXDouble().intValue()==0 && display.getIncrXDouble()>Double.parseDouble(valueX) )||
+                        (display.getIncrYDouble().intValue()==0 && display.getIncrYDouble()>Double.parseDouble(valueY))) {
+                    JOptionPane.showMessageDialog(MainFrame.this,
+                            "В минимальном значении знак на дальнем разряде", "Ошибочный ввод числа знаков", JOptionPane.WARNING_MESSAGE);
+                    showGridItem.setSelected(false);
                 }
-                else
+                else {
+                    display.setXDigits(Integer.parseInt(valueX));
+                    display.setYDigits(Integer.parseInt(valueY));
                     display.setShowGrid(showGridItem.isSelected());
+                }
             }
+            else
+                display.setShowGrid(showGridItem.isSelected());
         });
 
         setToDefaultItem = graphics.add(new JMenuItem("Отменить все изменения"));
         setToDefaultItem.setEnabled(false);
-        setToDefaultItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                menu.menuGlobal(false);
-                setToDefaultItem.setEnabled(false);
-            }
+        setToDefaultItem.addActionListener(e -> {
+            menu.menuGlobal(false);
+            setToDefaultItem.setEnabled(false);
         });
         setToDefaultItem.setAccelerator(KeyStroke.getKeyStroke("ctrl C"));
 

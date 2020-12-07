@@ -154,10 +154,10 @@ public class GraphicsDisplay extends JPanel {
         Font oldFont = canvas.getFont();
 
         if (turnGraph) rotatePanel(canvas);
+        if (showGrid) paintGrids(canvas);
         if (showAxis) paintAxis(canvas);
         paintGraphics(canvas);
         if (showDefaultCondition) paintMarkers(canvas);
-        if (showGrid) paintGrids(canvas);
 
         canvas.setFont(oldFont);
         canvas.setPaint(oldPaint);
