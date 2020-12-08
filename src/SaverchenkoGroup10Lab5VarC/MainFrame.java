@@ -56,8 +56,8 @@ public class MainFrame extends JFrame {
                 fileChooser = new JFileChooser();
                 fileChooser.setCurrentDirectory(new File("C:\\Users\\SergeySaber\\IdeaProjects\\lab5p"));
             }
-            //if (fileChooser.showSaveDialog(MainFrame.this)==JFileChooser.APPROVE_OPTION)
-            //    saveGraphics(fileChooser.getSelectedFile(), ); дописать тут 2й аргумент в виде массива новых ху
+            if (fileChooser.showSaveDialog(MainFrame.this)==JFileChooser.APPROVE_OPTION)
+                saveGraphics(fileChooser.getSelectedFile(), display.getGraphicsData());
         });
 
         JMenuItem close = file.add(new JMenuItem("Выход"));

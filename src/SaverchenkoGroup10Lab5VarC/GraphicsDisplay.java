@@ -21,13 +21,14 @@ public class GraphicsDisplay extends JPanel {
 
     private Double[][] graphicsData;
 
-    private Double[][] graphicsDataNew; //Матрица для сохранения(если вдруг изменились точки)
+    private Double[][] graphicsDataOriginal; //Матрица для сохранения(если вдруг изменились точки)
     public Stack<Double[][]> undoLog = new Stack<>(); //Стэк для хранения всех приближений и отката к первоначальному виду
     private int selectedMarker = -1; //когда навелись мышкой на маркер меняет значение
     private Double[][] viewport = new Double[2][2]; //Границы окошка сюда сохраняются начинаня с текущего
     Double[] originalPoint = new Double[2]; //этот и нижний массив для временного хранения границ при выделении
     Double[] finalPoint = new Double[2];
     boolean scaleMode = false; //для отрисовки выделительного прямоугольника
+    boolean changeMode = false;// для перемещения точек
     private final java.awt.geom.Rectangle2D.Double selectionRect = new java.awt.geom.Rectangle2D.Double(); //сам прямоугольник
     private static DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance();
 
@@ -71,10 +72,10 @@ public class GraphicsDisplay extends JPanel {
     @Description("Тут мы инициализируем новый массив в котором будут хранится смещенные координаты")
     public void showGraphics(Double[][] graphicsData) {
         this.graphicsData = graphicsData;
-        graphicsDataNew = new Double[graphicsData.length][2];
+        graphicsDataOriginal = new Double[graphicsData.length][2];
         for(int i=0; i<graphicsData.length; i++) {
-            graphicsDataNew[i][0]=graphicsData[i][0];
-            graphicsDataNew[i][1]=graphicsData[i][1];
+            graphicsDataOriginal[i][0]=graphicsData[i][0];
+            graphicsDataOriginal[i][1]=graphicsData[i][1];
         }
         repaint();
     }
@@ -130,7 +131,7 @@ public class GraphicsDisplay extends JPanel {
         [1][0] - maxX;
         [1][1] - minY;
         [0][0] - minX;
-        [0][1] - viewport[0][1]
+        [0][1] - maxY
          */
             for (int i = 1; i < graphicsData.length; i++) {
                 if (graphicsData[i][1] < viewport[1][1]) {
@@ -201,6 +202,13 @@ public class GraphicsDisplay extends JPanel {
     }
 
     protected void reset() {
+
+        if (graphicsData != null)
+            for (int i = 0; i < graphicsData.length; i++) {
+                graphicsData[i][0] = graphicsDataOriginal[i][0];
+                graphicsData[i][1] = graphicsDataOriginal[i][1];
+            }
+
         zoomToRegion(minX,maxY,maxX,minY);
     }
 
@@ -365,6 +373,25 @@ public class GraphicsDisplay extends JPanel {
         return new Double[]{viewport[0][0]+(double)x/scaleX, viewport[0][1]-(double)y/scaleY};
     }
 
+    protected int findPoint(int x, int y) {
+        if (graphicsData != null) {
+            int pos = 0;
+            for (Double[] point : graphicsData) {
+                Point2D.Double screenPoint = xyToPoint(point[0], point[1]);
+                double distance = (screenPoint.getX() - x) * (screenPoint.getX() - x) +
+                        (screenPoint.getY() - y) * (screenPoint.getY() - y);
+                if (distance < 100.0)
+                    return pos;
+                pos++;
+            }
+        }
+        return -1;
+    }
+
+    public Double[][] getGraphicsData(){
+        return graphicsData;
+    }
+
     public class MouseHandler extends MouseAdapter {
 
         public void mouseClicked(MouseEvent e) { //При щелчке мышью вызывается метод
@@ -380,9 +407,17 @@ public class GraphicsDisplay extends JPanel {
         @Description("Для забора начальных координат при приближении")
         public void mousePressed(MouseEvent e) { //при нажатии
             if (e.getButton() == 1) {
-                scaleMode = true;
-                originalPoint = pointToXY(e.getX(),e.getY()-getHeight());
-                selectionRect.setFrame(e.getX(),e.getY(),25.0D,25.0D);
+                selectedMarker = findPoint(e.getX(), e.getY());
+                originalPoint = pointToXY(e.getX(), e.getY() - getHeight());
+                if (selectedMarker >= 0) {
+                    changeMode = true;
+                    setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+                } else {
+
+                    scaleMode = true;
+                    setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+                    selectionRect.setFrame(e.getX(), e.getY(), 25.0D, 25.0D);
+                }
             }
 
 
@@ -391,11 +426,19 @@ public class GraphicsDisplay extends JPanel {
         @Description("Для забора координат при приближении")
         public void mouseReleased(MouseEvent e) { // при отпускании кнопки мыши
             if (e.getButton() == 1) {
-                scaleMode = false;
-                finalPoint = pointToXY(e.getX(),e.getY());
-                undoLog.add(viewport);
-                viewport = new Double[2][2];
-                zoomToRegion(originalPoint[0],originalPoint[1],finalPoint[0],finalPoint[1]);
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                if (changeMode){
+                    changeMode = false;
+                    selectedMarker = -1;
+                    repaint();
+                }
+                else {
+                    scaleMode = false;
+                    finalPoint = pointToXY(e.getX(), e.getY());
+                    undoLog.add(viewport);
+                    viewport = new Double[2][2];
+                    zoomToRegion(originalPoint[0], originalPoint[1], finalPoint[0], finalPoint[1]);
+                }
             }
         }
 
@@ -404,17 +447,31 @@ public class GraphicsDisplay extends JPanel {
     public class MouseMotionHandler implements MouseMotionListener {
 
         public void mouseDragged(MouseEvent e) { //многократно вызывается при перетаскивании мыши, когда нажата ее левая кнопка
-            if (scaleMode) {
-                double  width = e.getX() - selectionRect.getX();
-                double  height = e.getY() - selectionRect.getY();
+            if (changeMode) {
+                Double[] currentPoint = pointToXY(e.getX(), e.getY());
+                double newY = currentPoint[1];
+                if (newY > viewport[0][1])
+                    newY = viewport[0][1];
+                if (newY < viewport[1][1])
+                    newY = viewport[1][1];
+                graphicsData[selectedMarker][1] = newY;
+                repaint();
+            } else {
+                double width = e.getX() - selectionRect.getX();
+                double height = e.getY() - selectionRect.getY();
                 selectionRect.setFrame(selectionRect.getX(), selectionRect.getY(), width, height);
                 repaint();
             }
         }
 
         public void mouseMoved(MouseEvent e) { //Обычное перемещение мыши приводит к  многократному вызову метода
+            selectedMarker = findPoint(e.getX(),e.getY());
+            if (selectedMarker>=0)
+                setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+            else
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 
-
+            repaint();
         }
     }
 }
