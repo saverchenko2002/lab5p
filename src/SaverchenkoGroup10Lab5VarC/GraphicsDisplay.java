@@ -29,6 +29,7 @@ public class GraphicsDisplay extends JPanel {
     Double[] finalPoint = new Double[2];
     boolean scaleMode = false; //для отрисовки выделительного прямоугольника
     boolean changeMode = false;// для перемещения точек
+    boolean changes = false;
     private final java.awt.geom.Rectangle2D.Double selectionRect = new java.awt.geom.Rectangle2D.Double(); //сам прямоугольник
     private static DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance();
 
@@ -69,7 +70,7 @@ public class GraphicsDisplay extends JPanel {
         addMouseMotionListener(new MouseMotionHandler());
     }
 
-    @Description("Тут мы инициализируем новый массив в котором будут хранится смещенные координаты")
+    @Description("Тут мы инициализируем массив для резета")
     public void showGraphics(Double[][] graphicsData) {
         this.graphicsData = graphicsData;
         graphicsDataOriginal = new Double[graphicsData.length][2];
@@ -455,13 +456,13 @@ public class GraphicsDisplay extends JPanel {
                 if (newY < viewport[1][1])
                     newY = viewport[1][1];
                 graphicsData[selectedMarker][1] = newY;
-                repaint();
+                changes = true;
             } else {
                 double width = e.getX() - selectionRect.getX();
                 double height = e.getY() - selectionRect.getY();
                 selectionRect.setFrame(selectionRect.getX(), selectionRect.getY(), width, height);
-                repaint();
             }
+            repaint();
         }
 
         public void mouseMoved(MouseEvent e) { //Обычное перемещение мыши приводит к  многократному вызову метода

@@ -9,14 +9,14 @@ import java.io.*;
 
 public class MainFrame extends JFrame {
 
-    private static final int WIDTH = 500; // РАЗМЕР ОКНА ПО УМОЛЧАНИЮ
+    private static final int WIDTH = 500;
     private static final int HEIGHT = 500;
 
-    JMenuItem modifyItem, modifyConditionItem,showGridItem,         //КНОПКИ МЕНЮ
+    JMenuItem modifyItem, modifyConditionItem,showGridItem,
             turnLeftItem,showAxisItem,setToDefaultItem,save;
 
-    private JFileChooser fileChooser = null; //для открытия и сохранения
-    private boolean fileLoaded = false; //для дальнейшей обработки когда файл загрузился
+    private JFileChooser fileChooser = null;
+    private boolean fileLoaded = false;
 
     GraphicsDisplay display = new GraphicsDisplay();
     GraphicsMenuListener menu = new GraphicsMenuListener();
@@ -108,12 +108,11 @@ public class MainFrame extends JFrame {
 
     protected void openGraphics (File selectedFile) {
         try (DataInputStream in = new DataInputStream(new FileInputStream(selectedFile))) {
-            Double[][] graphicsData = new Double[in.available() / (Double.SIZE / 8) / 4][];
+            Double[][] graphicsData = new Double[in.available() / (Double.SIZE / 8) / 2][];
             int i = 0;
             while (in.available() > 0) {
                 double x = in.readDouble();
                 double y = in.readDouble();
-                in.skipBytes(2*(Double.SIZE/8));
                 graphicsData[i++] = new Double[]{x, y};
             }
 
@@ -135,9 +134,9 @@ public class MainFrame extends JFrame {
     protected void saveGraphics (File selectedFile, Double[][] graphics) {
         try (DataOutputStream out = new DataOutputStream(new FileOutputStream(selectedFile, false))) {
 
-            for (Double[] graphic : graphics) {
-                out.writeDouble(graphic[0]);
-                out.writeDouble(graphic[1]);
+            for (int i = 0; i < graphics.length; i++){
+                out.writeDouble(graphics[i][0]);
+                out.writeDouble(graphics[i][1]);
             }
 
         } catch (IOException exc) {
@@ -180,6 +179,8 @@ public class MainFrame extends JFrame {
 
         public boolean atLeastOneIsSelected(){
             if (display.undoLog.size()!=0)
+                return true;
+            else if (display.changes)
                 return true;
             if (turnLeftItem.isSelected() || modifyItem.isSelected())
                 return true;
