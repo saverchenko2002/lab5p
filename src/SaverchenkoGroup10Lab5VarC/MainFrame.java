@@ -9,31 +9,26 @@ import java.io.*;
 
 public class MainFrame extends JFrame {
 
-    private static final int WIDTH = 500;
+    private static final int WIDTH = 500; // РАЗМЕР ОКНА ПО УМОЛЧАНИЮ
     private static final int HEIGHT = 500;
 
-    JMenuItem modifyItem;
-    JMenuItem modifyConditionItem;
-    JMenuItem showGridItem;
-    JMenuItem turnLeftItem;
-    JMenuItem showAxisItem;
-    JMenuItem setToDefaultItem;
+    JMenuItem modifyItem, modifyConditionItem,showGridItem,         //КНОПКИ МЕНЮ
+            turnLeftItem,showAxisItem,setToDefaultItem,save;
 
-    private JFileChooser fileChooser = null;
-    private boolean fileLoaded = false;
+    private JFileChooser fileChooser = null; //для открытия и сохранения
+    private boolean fileLoaded = false; //для дальнейшей обработки когда файл загрузился
 
     GraphicsDisplay display = new GraphicsDisplay();
     GraphicsMenuListener menu = new GraphicsMenuListener();
 
     public MainFrame() {
 
-        super("Построение графиков функций на основе заранее подготовленных файлов");
+        super("Обработка событий мыши");
         setSize(WIDTH, HEIGHT);
         Toolkit kit = Toolkit.getDefaultToolkit();
         setLocation((kit.getScreenSize().width - WIDTH) / 2, (kit.getScreenSize().height - HEIGHT) / 2);
         Image img = kit.getImage("src/SaverchenkoGroup10Lab5VarC/icon.PNG");
         setIconImage(img);
-        setExtendedState(MAXIMIZED_BOTH);
 
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
@@ -51,6 +46,18 @@ public class MainFrame extends JFrame {
             }
             if (fileChooser.showOpenDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION)
                 openGraphics(fileChooser.getSelectedFile());
+        });
+
+        save = file.add(new JMenuItem("Сохранить значения графика"));
+        save.setEnabled(false);
+        save.setAccelerator(KeyStroke.getKeyStroke("ctrl S"));
+        save.addActionListener(e -> {
+            if (fileChooser == null) {
+                fileChooser = new JFileChooser();
+                fileChooser.setCurrentDirectory(new File("C:\\Users\\SergeySaber\\IdeaProjects\\lab5p"));
+            }
+            //if (fileChooser.showSaveDialog(MainFrame.this)==JFileChooser.APPROVE_OPTION)
+            //    saveGraphics(fileChooser.getSelectedFile(), ); дописать тут 2й аргумент в виде массива новых ху
         });
 
         JMenuItem close = file.add(new JMenuItem("Выход"));
@@ -71,33 +78,14 @@ public class MainFrame extends JFrame {
         turnLeftItem.addActionListener(e -> display.setTurnGraph(turnLeftItem.isSelected()));
 
         showGridItem = graphics.add(new JCheckBoxMenuItem("Показать сетку"));
-        showGridItem.addActionListener(e -> {
-            if (showGridItem.isSelected()) {
-                String valueX = JOptionPane.showInputDialog(MainFrame.this,
-                        "Введите сколько знаков после запятой в Х:\nminX-" + display.getIncrX(), "Ограничение Х", JOptionPane.QUESTION_MESSAGE);
-                String valueY = JOptionPane.showInputDialog(MainFrame.this,
-                        "Введите сколько знаков после запятой в Y:\nminY-" + display.getIncrY(), "Ограничение Y", JOptionPane.QUESTION_MESSAGE);
-                if ((display.getIncrXDouble().intValue()==0 && display.getIncrXDouble()>Double.parseDouble(valueX) )||
-                        (display.getIncrYDouble().intValue()==0 && display.getIncrYDouble()>Double.parseDouble(valueY))) {
-                    JOptionPane.showMessageDialog(MainFrame.this,
-                            "В минимальном значении знак на дальнем разряде", "Ошибочный ввод числа знаков", JOptionPane.WARNING_MESSAGE);
-                    showGridItem.setSelected(false);
-                }
-                else {
-                    display.setXDigits(Integer.parseInt(valueX));
-                    display.setYDigits(Integer.parseInt(valueY));
-                    display.setShowGrid(showGridItem.isSelected());
-                }
-            }
-            else
-                display.setShowGrid(showGridItem.isSelected());
-        });
+        showGridItem.addActionListener(e -> display.setShowGrid(showGridItem.isSelected()));
 
         setToDefaultItem = graphics.add(new JMenuItem("Отменить все изменения"));
         setToDefaultItem.setEnabled(false);
         setToDefaultItem.addActionListener(e -> {
             menu.menuGlobal(false);
             setToDefaultItem.setEnabled(false);
+            display.reset();
         });
         setToDefaultItem.setAccelerator(KeyStroke.getKeyStroke("ctrl C"));
 
@@ -114,11 +102,12 @@ public class MainFrame extends JFrame {
             modifyConditionItem.setEnabled(false);
             display.setModifiedCondition(false);
         }
+        save.setEnabled(menu.atLeastOneIsSelected()); //доработать для случая когда хоть 1 точка смещена
+
     }
 
     protected void openGraphics (File selectedFile) {
-        try {
-            DataInputStream in = new DataInputStream(new FileInputStream(selectedFile));
+        try (DataInputStream in = new DataInputStream(new FileInputStream(selectedFile))) {
             Double[][] graphicsData = new Double[in.available() / (Double.SIZE / 8) / 4][];
             int i = 0;
             while (in.available() > 0) {
@@ -134,14 +123,26 @@ public class MainFrame extends JFrame {
                 display.showGraphics(graphicsData);
             }
 
-            in.close();
-
         } catch (FileNotFoundException ex) {
             JOptionPane.showMessageDialog(MainFrame.this, "Указанный файл не найден",
                     "Ошибка загрузки данных", JOptionPane.WARNING_MESSAGE);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(MainFrame.this, "Ошибка чтения координат точек из файла",
                     "Ошибка загрузки данных", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    protected void saveGraphics (File selectedFile, Double[][] graphics) {
+        try (DataOutputStream out = new DataOutputStream(new FileOutputStream(selectedFile, false))) {
+
+            for (Double[] graphic : graphics) {
+                out.writeDouble(graphic[0]);
+                out.writeDouble(graphic[1]);
+            }
+
+        } catch (IOException exc) {
+            System.out.println("Ошибка записи в файл");
+            exc.printStackTrace();
         }
     }
 
@@ -178,6 +179,8 @@ public class MainFrame extends JFrame {
         }
 
         public boolean atLeastOneIsSelected(){
+            if (display.undoLog.size()!=0)
+                return true;
             if (turnLeftItem.isSelected() || modifyItem.isSelected())
                 return true;
             else if (!showAxisItem.isSelected())
