@@ -13,6 +13,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.Stack;
 
@@ -48,6 +49,7 @@ public class GraphicsDisplay extends JPanel {
 
     private final Font axisFont;
     private final Font labelFont; //шрифт для окошка с координатами при наведении на точку
+    private final Font gridFont;
 
     private double minX, maxX, minY, maxY; //оставил для более простого отката к резету
     private double scaleX;
@@ -64,7 +66,13 @@ public class GraphicsDisplay extends JPanel {
         markerStroke = new BasicStroke(2f);
         gridStroke = new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL,
                 10f, new float[]{1}, 0f);
-        labelFont = new Font(Font.SERIF, Font.PLAIN+Font.ITALIC, 18);
+        gridFont = new Font(Font.SERIF, Font.PLAIN+Font.ITALIC, 18);
+        labelFont = new Font(Font.SANS_SERIF, Font.ITALIC+Font.PLAIN, 16);
+
+        formatter.setGroupingUsed(false);
+        DecimalFormatSymbols dottedDouble = formatter.getDecimalFormatSymbols();
+        dottedDouble.setDecimalSeparator('.');
+        formatter.setDecimalFormatSymbols(dottedDouble);
 
         addMouseListener(new MouseHandler());
         addMouseMotionListener(new MouseMotionHandler());
@@ -189,6 +197,7 @@ public class GraphicsDisplay extends JPanel {
         if (showGrid) paintGrids(canvas);
         if (showAxis) paintAxis(canvas);
         paintGraphics(canvas);
+        paintLabels(canvas);
         if (showDefaultCondition) paintMarkers(canvas);
         paintSelection(canvas);
 
@@ -209,6 +218,7 @@ public class GraphicsDisplay extends JPanel {
                 graphicsData[i][0] = graphicsDataOriginal[i][0];
                 graphicsData[i][1] = graphicsDataOriginal[i][1];
             }
+        undoLog.clear();
 
         zoomToRegion(minX,maxY,maxX,minY);
     }
@@ -327,7 +337,7 @@ public class GraphicsDisplay extends JPanel {
         canvas.draw(new Line2D.Double(xyToPoint(viewport[0][0], viewport[0][1]), xyToPoint(viewport[1][0], viewport[0][1])));
 
         canvas.setColor(Color.BLACK);
-        canvas.setFont(labelFont);
+        canvas.setFont(gridFont);
         FontRenderContext context = canvas.getFontRenderContext();
 
         double labelY;
@@ -346,6 +356,7 @@ public class GraphicsDisplay extends JPanel {
         Point2D.Double point;
         String label;
         Rectangle2D bounds;
+        if (undoLog.size()<=3)
         formatter.setMaximumFractionDigits(undoLog.size()+1);
         for (step = (viewport[1][0] - viewport[0][0]) / 10.0; pos < viewport[1][0]; pos += step){
             point = xyToPoint(pos, labelY);
@@ -362,6 +373,20 @@ public class GraphicsDisplay extends JPanel {
             canvas.drawString(label, (float)(point.getX() +5.0), (float)(point.getY() - bounds.getHeight()));
         }
 
+    }
+
+    protected void paintLabels(Graphics2D canvas) {
+        if (selectedMarker>=0) {
+            formatter.setMaximumFractionDigits(undoLog.size());
+            String label;
+            canvas.setColor(Color.black);
+            Point2D.Double point = xyToPoint(graphicsData[selectedMarker][0], graphicsData[selectedMarker][1]);
+            label = "X = " + formatter.format(graphicsData[selectedMarker][0]) + "; Y = " + formatter.format(graphicsData[selectedMarker][1]);
+            canvas.setFont(labelFont);
+            FontRenderContext context = canvas.getFontRenderContext();
+            Rectangle2D bounds = labelFont.getStringBounds(label, context);
+            canvas.drawString(label, (float)(point.getX() + 5.0), (float)(point.getY() - bounds.getHeight()));
+        }
     }
 
     protected Point2D.Double xyToPoint(double x, double y) {
