@@ -134,9 +134,9 @@ public class MainFrame extends JFrame {
     protected void saveGraphics (File selectedFile, Double[][] graphics) {
         try (DataOutputStream out = new DataOutputStream(new FileOutputStream(selectedFile, false))) {
 
-            for (int i = 0; i < graphics.length; i++){
-                out.writeDouble(graphics[i][0]);
-                out.writeDouble(graphics[i][1]);
+            for (Double[] graphic : graphics) {
+                out.writeDouble(graphic[0]);
+                out.writeDouble(graphic[1]);
             }
 
         } catch (IOException exc) {

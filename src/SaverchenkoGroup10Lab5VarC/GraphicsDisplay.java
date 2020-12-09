@@ -377,7 +377,7 @@ public class GraphicsDisplay extends JPanel {
 
     protected void paintLabels(Graphics2D canvas) {
         if (selectedMarker>=0) {
-            formatter.setMaximumFractionDigits(undoLog.size());
+            formatter.setMaximumFractionDigits(undoLog.size()+(int)Math.ceil(viewport[1][0]));
             String label;
             canvas.setColor(Color.black);
             Point2D.Double point = xyToPoint(graphicsData[selectedMarker][0], graphicsData[selectedMarker][1]);
@@ -442,7 +442,11 @@ public class GraphicsDisplay extends JPanel {
 
                     scaleMode = true;
                     setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
-                    selectionRect.setFrame(e.getX(), e.getY(), 25.0D, 25.0D);
+                    if (!turnGraph)
+                        selectionRect.setFrame(e.getX(), e.getY(), 25.0D, 25.0D);
+                    else
+                        selectionRect.setFrame(getHeight()-e.getY(),e.getX(),25.0D,25.0D);
+
                 }
             }
 
@@ -483,14 +487,27 @@ public class GraphicsDisplay extends JPanel {
                 graphicsData[selectedMarker][1] = newY;
                 changes = true;
             } else {
-                double width = e.getX() - selectionRect.getX();
-                double height = e.getY() - selectionRect.getY();
-                selectionRect.setFrame(selectionRect.getX(), selectionRect.getY(), width, height);
+                if(turnGraph){
+                    System.out.println("х прямоугольника при повороте "+selectionRect.getX()+"\nу прямоугольника  при повороте"+selectionRect.getY());
+                    double width = getHeight()+e.getY() - selectionRect.getY()+25D;
+                    double height =  e.getX()- selectionRect.getX() ;
+                    System.out.println("ширина-"+width+" высота-"+height);
+                    selectionRect.setFrame(selectionRect.getX(), selectionRect.getY(),width,height);
+                }
+                else {
+                    System.out.println("х прямоугольника обычка "+selectionRect.getX()+"\nу прямоугольника обычка"+selectionRect.getY());
+                    double width = e.getX() - selectionRect.getX();
+                    double height = e.getY() - selectionRect.getY();
+                    selectionRect.setFrame(selectionRect.getX(), selectionRect.getY(), width, height);
+                }
             }
             repaint();
         }
 
         public void mouseMoved(MouseEvent e) { //Обычное перемещение мыши приводит к  многократному вызову метода
+            if (!turnGraph)
+            System.out.println("x default-"+e.getX()+"y default-"+e.getY());
+            else  System.out.println("x turned-"+e.getX()+"y turned-"+e.getY());
             selectedMarker = findPoint(e.getX(),e.getY());
             if (selectedMarker>=0)
                 setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
@@ -502,3 +519,7 @@ public class GraphicsDisplay extends JPanel {
     }
 }
 
+/*
+что нужно доработать - опускание вниз лейбла когда точка поднимается за экран
+и при ротейте все функции для мышки переделать - как хз))
+ */
