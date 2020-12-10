@@ -102,7 +102,7 @@ public class MainFrame extends JFrame {
             modifyConditionItem.setEnabled(false);
             display.setModifiedCondition(false);
         }
-        save.setEnabled(menu.atLeastOneIsSelected()); //доработать для случая когда хоть 1 точка смещена
+        save.setEnabled(display.changes); //доработать для случая когда хоть 1 точка смещена
 
     }
 
@@ -178,10 +178,6 @@ public class MainFrame extends JFrame {
         }
 
         public boolean atLeastOneIsSelected(){
-            if (display.undoLog.size()!=0)
-                return true;
-            else if (display.changes)
-                return true;
             if (turnLeftItem.isSelected() || modifyItem.isSelected())
                 return true;
             else if (!showAxisItem.isSelected())
