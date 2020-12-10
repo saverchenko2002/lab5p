@@ -67,7 +67,7 @@ public class GraphicsDisplay extends JPanel {
         gridStroke = new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL,
                 10f, new float[]{1}, 0f);
         gridFont = new Font(Font.SERIF, Font.PLAIN+Font.ITALIC, 18);
-        labelFont = new Font(Font.SANS_SERIF, Font.ITALIC+Font.PLAIN, 16);
+        labelFont = new Font(Font.SANS_SERIF, Font.ITALIC+Font.PLAIN, 20);
 
         formatter.setGroupingUsed(false);
         DecimalFormatSymbols dottedDouble = formatter.getDecimalFormatSymbols();
@@ -379,13 +379,28 @@ public class GraphicsDisplay extends JPanel {
         if (selectedMarker>=0) {
             formatter.setMaximumFractionDigits(undoLog.size()+(int)Math.ceil(viewport[1][0]));
             String label;
-            canvas.setColor(Color.black);
+            canvas.setColor(Color.blue.brighter().brighter());
             Point2D.Double point = xyToPoint(graphicsData[selectedMarker][0], graphicsData[selectedMarker][1]);
             label = "X = " + formatter.format(graphicsData[selectedMarker][0]) + "; Y = " + formatter.format(graphicsData[selectedMarker][1]);
             canvas.setFont(labelFont);
             FontRenderContext context = canvas.getFontRenderContext();
             Rectangle2D bounds = labelFont.getStringBounds(label, context);
-            canvas.drawString(label, (float)(point.getX() + 5.0), (float)(point.getY() - bounds.getHeight()));
+            if ((graphicsData[selectedMarker][0]<=viewport[1][0] &&
+                    graphicsData[selectedMarker][0]>=(viewport[1][0]-(viewport[1][0]-viewport[0][0])/2))
+                    && (graphicsData[selectedMarker][1]<=viewport[0][1]
+                    && graphicsData[selectedMarker][1]>=(viewport[0][1]-(viewport[0][1]-viewport[1][1])/2)))
+                canvas.drawString(label, (float)(point.getX() - bounds.getWidth()), (float)(point.getY() + bounds.getHeight()));
+            else if((graphicsData[selectedMarker][0]<=viewport[1][0] &&
+                    graphicsData[selectedMarker][0]>=(viewport[1][0]-(viewport[1][0]-viewport[0][0])/2))
+            && (graphicsData[selectedMarker][1])>=viewport[1][1] && graphicsData[selectedMarker][1]<=(viewport[1][1]-(viewport[1][1]-viewport[0][1])/2))
+                canvas.drawString(label, (float)(point.getX() - bounds.getWidth()), (float)(point.getY() - bounds.getHeight()));
+            else if((graphicsData[selectedMarker][1])>=viewport[1][1] && graphicsData[selectedMarker][1]<=(viewport[1][1]-(viewport[1][1]-viewport[0][1])/2)
+                    && (graphicsData[selectedMarker][0]>=viewport[0][0] && graphicsData[selectedMarker][0]<=viewport[0][0]+(viewport[1][0]-viewport[0][0])/2))
+                canvas.drawString(label, (float)(point.getX() + 5.0), (float)(point.getY() - bounds.getHeight()));
+
+            else {
+                canvas.drawString(label, (float)(point.getX() + 5.0), (float)(point.getY() + bounds.getHeight()));
+            }
         }
     }
 
@@ -432,35 +447,33 @@ public class GraphicsDisplay extends JPanel {
 
         @Description("Для забора начальных координат при приближении")
         public void mousePressed(MouseEvent e) { //при нажатии
-            if (e.getButton() == 1) {
-                selectedMarker = findPoint(e.getX(), e.getY());
-                if (!turnGraph)
-                    originalPoint = pointToXY(e.getX(), e.getY());
-                else {
-                    originalPoint = pointToXY(getHeight()-e.getY(),e.getX());
-                    }
-                if (selectedMarker >= 0) {
-                    changeMode = true;
-                    setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
-                } else {
-
-                    scaleMode = true;
-                    setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+                if (e.getButton() == 1) {
+                    selectedMarker = findPoint(e.getX(), e.getY());
                     if (!turnGraph)
-                        selectionRect.setFrame(e.getX(), e.getY(), 0.5D, 0.5D);
-                    else
-                        selectionRect.setFrame(getHeight()-e.getY(),e.getX(),0.5D,0.5D);
+                        originalPoint = pointToXY(e.getX(), e.getY());
+                    else {
+                        originalPoint = pointToXY(getHeight() - e.getY(), e.getX());
+                    }
+                    if (selectedMarker >= 0 && !turnGraph) {
+                        changeMode = true;
+                        setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+                    } else {
+
+                        scaleMode = true;
+                        setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+                        if (!turnGraph)
+                            selectionRect.setFrame(e.getX(), e.getY(), 0.5D, 0.5D);
+                        else
+                            selectionRect.setFrame(getHeight() - e.getY(), e.getX(), 0.5D, 0.5D);
+                    }
                 }
-            }
-
-
         }
 
         @Description("Для забора координат при приближении")
         public void mouseReleased(MouseEvent e) { // при отпускании кнопки мыши
             if (e.getButton() == 1) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                if (changeMode){
+                if (changeMode && !turnGraph){
                     changeMode = false;
                     selectedMarker = -1;
                     repaint();
@@ -483,7 +496,7 @@ public class GraphicsDisplay extends JPanel {
     public class MouseMotionHandler implements MouseMotionListener {
 
         public void mouseDragged(MouseEvent e) { //многократно вызывается при перетаскивании мыши, когда нажата ее левая кнопка
-            if (changeMode) {
+            if (changeMode && !turnGraph) {
                 Double[] currentPoint = pointToXY(e.getX(), e.getY());
                 double newY = currentPoint[1];
                 if (newY > viewport[0][1])
@@ -496,14 +509,11 @@ public class GraphicsDisplay extends JPanel {
                 double width;
                 double height;
                 if(turnGraph){
-                    System.out.println("экран ты уебище?"+getWidth());
-                    System.out.println("х прямоугольника при повороте "+(selectionRect.getX())+"\nу прямоугольника  при повороте"+selectionRect.getY());
                     width =  getHeight()-e.getY()  - selectionRect.getX() ;
                     height = e.getX() - selectionRect.getY() ;
                     System.out.println("ширина-"+width+" высота-"+height);
                 }
                 else {
-                    System.out.println("х прямоугольника обычка "+selectionRect.getX()+"\nу прямоугольника обычка"+selectionRect.getY());
                     width = e.getX() - selectionRect.getX();
                     height = e.getY() - selectionRect.getY();
                 }
@@ -513,11 +523,9 @@ public class GraphicsDisplay extends JPanel {
         }
 
         public void mouseMoved(MouseEvent e) { //Обычное перемещение мыши приводит к  многократному вызову метода
-            if (!turnGraph)
-            System.out.println("x default-"+e.getX()+"y default-"+e.getY());
-            else  System.out.println("x turned-"+e.getX()+"y turned-"+e.getY());
+
             selectedMarker = findPoint(e.getX(),e.getY());
-            if (selectedMarker>=0)
+            if (selectedMarker>=0 && !turnGraph)
                 setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
             else
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
