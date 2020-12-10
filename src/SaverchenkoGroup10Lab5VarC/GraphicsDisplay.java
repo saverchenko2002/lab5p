@@ -336,7 +336,7 @@ public class GraphicsDisplay extends JPanel {
 
         canvas.draw(new Line2D.Double(xyToPoint(viewport[0][0], viewport[0][1]), xyToPoint(viewport[1][0], viewport[0][1])));
 
-        canvas.setColor(Color.BLACK);
+        canvas.setColor(Color.blue.brighter());
         canvas.setFont(gridFont);
         FontRenderContext context = canvas.getFontRenderContext();
 
@@ -362,7 +362,7 @@ public class GraphicsDisplay extends JPanel {
             point = xyToPoint(pos, labelY);
             label = formatter.format(pos);
             bounds = labelFont.getStringBounds(label, context);
-            canvas.drawString(label, (float)(point.getX() +5), (float)(point.getY() - bounds.getHeight()));
+            canvas.drawString(label, (float)(point.getX() +5), (float)(point.getY() - bounds.getHeight())+20);
         }
 
         pos = viewport[1][1];
@@ -370,7 +370,7 @@ public class GraphicsDisplay extends JPanel {
             point = xyToPoint(labelX, pos);
             label = formatter.format(pos);
             bounds = labelFont.getStringBounds(label, context);
-            canvas.drawString(label, (float)(point.getX() +5.0), (float)(point.getY() - bounds.getHeight()));
+            canvas.drawString(label, (float)(point.getX() +5), (float)(point.getY() - bounds.getHeight())+25);
         }
 
     }
