@@ -33,6 +33,7 @@ public class GraphicsDisplay extends JPanel {
     boolean changes = false;
     private final java.awt.geom.Rectangle2D.Double selectionRect = new java.awt.geom.Rectangle2D.Double(); //сам прямоугольник
     private static final DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance();
+    double activate = 1.25;
 
     private boolean showAxis = true;
     private boolean showDefaultCondition = false;
@@ -226,7 +227,7 @@ public class GraphicsDisplay extends JPanel {
     protected void paintMarkers(Graphics2D canvas) {
 
         canvas.setStroke(markerStroke);
-
+        int i = 0;
         for (Double[] point : graphicsData) {
             GeneralPath marker = new GeneralPath();
             if (showModifiedCondition && point[1].intValue() % 2 == 0 && point[1].intValue() != 0)
@@ -234,19 +235,38 @@ public class GraphicsDisplay extends JPanel {
             else
                 canvas.setColor(Color.blue);
             Point2D.Double center = xyToPoint(point[0], point[1]);
-            marker.moveTo(center.getX() + 2.75, center.getY() - 5);
-            marker.lineTo(marker.getCurrentPoint().getX() - 5.5, marker.getCurrentPoint().getY());
-            marker.moveTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() + 10);
-            marker.lineTo(marker.getCurrentPoint().getX() + 5.5, marker.getCurrentPoint().getY());
-            marker.moveTo(center.getX(), marker.getCurrentPoint().getY());
-            marker.lineTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() - 10);
-            marker.moveTo(center.getX() - 5, center.getY() + 2.75);
-            marker.lineTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() - 5.5);
-            marker.moveTo(marker.getCurrentPoint().getX() + 10, marker.getCurrentPoint().getY());
-            marker.lineTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() + 5.5);
-            marker.moveTo(marker.getCurrentPoint().getX(), center.getY());
-            marker.lineTo(marker.getCurrentPoint().getX() - 10, marker.getCurrentPoint().getY());
+            if (selectedMarker>=0 && i==selectedMarker) {
+                marker.moveTo(center.getX() + activate*2.75, center.getY() - activate*5);
+                marker.lineTo(marker.getCurrentPoint().getX() - activate*5.5, marker.getCurrentPoint().getY());
+                marker.moveTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() + activate*10);
+                marker.lineTo(marker.getCurrentPoint().getX() + activate*5.5, marker.getCurrentPoint().getY());
+                marker.moveTo(center.getX(), marker.getCurrentPoint().getY());
+                marker.lineTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() - activate*10);
+                marker.moveTo(center.getX() - activate*5, center.getY() + activate*2.75);
+                marker.lineTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() - activate*5.5);
+                marker.moveTo(marker.getCurrentPoint().getX() + activate*10, marker.getCurrentPoint().getY());
+                marker.lineTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() + activate*5.5);
+                marker.moveTo(marker.getCurrentPoint().getX(), center.getY());
+                marker.lineTo(marker.getCurrentPoint().getX() - activate*10, marker.getCurrentPoint().getY());
+                canvas.setColor(Color.magenta);
+            }
+            else
+            {
+                marker.moveTo(center.getX() + 2.75, center.getY() - 5);
+                marker.lineTo(marker.getCurrentPoint().getX() - 5.5, marker.getCurrentPoint().getY());
+                marker.moveTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() + 10);
+                marker.lineTo(marker.getCurrentPoint().getX() + 5.5, marker.getCurrentPoint().getY());
+                marker.moveTo(center.getX(), marker.getCurrentPoint().getY());
+                marker.lineTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() - 10);
+                marker.moveTo(center.getX() - 5, center.getY() + 2.75);
+                marker.lineTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() - 5.5);
+                marker.moveTo(marker.getCurrentPoint().getX() + 10, marker.getCurrentPoint().getY());
+                marker.lineTo(marker.getCurrentPoint().getX(), marker.getCurrentPoint().getY() + 5.5);
+                marker.moveTo(marker.getCurrentPoint().getX(), center.getY());
+                marker.lineTo(marker.getCurrentPoint().getX() - 10, marker.getCurrentPoint().getY());
+            }
             canvas.draw(marker);
+            i++;
         }
         repaint();
     }
