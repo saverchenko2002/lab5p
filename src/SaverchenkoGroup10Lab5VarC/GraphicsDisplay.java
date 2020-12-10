@@ -434,7 +434,11 @@ public class GraphicsDisplay extends JPanel {
         public void mousePressed(MouseEvent e) { //при нажатии
             if (e.getButton() == 1) {
                 selectedMarker = findPoint(e.getX(), e.getY());
-                originalPoint = pointToXY(e.getX(), e.getY() - getHeight());
+                if (!turnGraph)
+                    originalPoint = pointToXY(e.getX(), e.getY());
+                else {
+                    originalPoint = pointToXY(getHeight()-e.getY(),e.getX());
+                    }
                 if (selectedMarker >= 0) {
                     changeMode = true;
                     setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
@@ -443,10 +447,9 @@ public class GraphicsDisplay extends JPanel {
                     scaleMode = true;
                     setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
                     if (!turnGraph)
-                        selectionRect.setFrame(e.getX(), e.getY(), 25.0D, 25.0D);
+                        selectionRect.setFrame(e.getX(), e.getY(), 0.5D, 0.5D);
                     else
-                        selectionRect.setFrame(getHeight()-e.getY(),e.getX(),25.0D,25.0D);
-
+                        selectionRect.setFrame(getHeight()-e.getY(),e.getX(),0.5D,0.5D);
                 }
             }
 
@@ -464,7 +467,10 @@ public class GraphicsDisplay extends JPanel {
                 }
                 else {
                     scaleMode = false;
-                    finalPoint = pointToXY(e.getX(), e.getY());
+                    if (!turnGraph)
+                        finalPoint = pointToXY(e.getX(), e.getY());
+                    else
+                        finalPoint = pointToXY(getHeight()-e.getY(),e.getX());
                     undoLog.add(viewport);
                     viewport = new Double[2][2];
                     zoomToRegion(originalPoint[0], originalPoint[1], finalPoint[0], finalPoint[1]);
@@ -487,19 +493,21 @@ public class GraphicsDisplay extends JPanel {
                 graphicsData[selectedMarker][1] = newY;
                 changes = true;
             } else {
+                double width;
+                double height;
                 if(turnGraph){
-                    System.out.println("х прямоугольника при повороте "+selectionRect.getX()+"\nу прямоугольника  при повороте"+selectionRect.getY());
-                    double width = getHeight()+e.getY() - selectionRect.getY()+25D;
-                    double height =  e.getX()- selectionRect.getX() ;
+                    System.out.println("экран ты уебище?"+getWidth());
+                    System.out.println("х прямоугольника при повороте "+(selectionRect.getX())+"\nу прямоугольника  при повороте"+selectionRect.getY());
+                    width =  getHeight()-e.getY()  - selectionRect.getX() ;
+                    height = e.getX() - selectionRect.getY() ;
                     System.out.println("ширина-"+width+" высота-"+height);
-                    selectionRect.setFrame(selectionRect.getX(), selectionRect.getY(),width,height);
                 }
                 else {
                     System.out.println("х прямоугольника обычка "+selectionRect.getX()+"\nу прямоугольника обычка"+selectionRect.getY());
-                    double width = e.getX() - selectionRect.getX();
-                    double height = e.getY() - selectionRect.getY();
-                    selectionRect.setFrame(selectionRect.getX(), selectionRect.getY(), width, height);
+                    width = e.getX() - selectionRect.getX();
+                    height = e.getY() - selectionRect.getY();
                 }
+                selectionRect.setFrame(selectionRect.getX(), selectionRect.getY(),width,height);
             }
             repaint();
         }
