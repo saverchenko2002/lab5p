@@ -102,7 +102,7 @@ public class MainFrame extends JFrame {
             modifyConditionItem.setEnabled(false);
             display.setModifiedCondition(false);
         }
-        save.setEnabled(display.changes); //доработать для случая когда хоть 1 точка смещена
+        save.setEnabled(display.changes);
 
     }
 

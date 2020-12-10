@@ -22,16 +22,16 @@ public class GraphicsDisplay extends JPanel {
 
     private Double[][] graphicsData;
 
-    private Double[][] graphicsDataOriginal; //Матрица для сохранения(если вдруг изменились точки)
-    public Stack<Double[][]> undoLog = new Stack<>(); //Стэк для хранения всех приближений и отката к первоначальному виду
-    private int selectedMarker = -1; //когда навелись мышкой на маркер меняет значение
-    private Double[][] viewport = new Double[2][2]; //Границы окошка сюда сохраняются начинаня с текущего
-    Double[] originalPoint = new Double[2]; //этот и нижний массив для временного хранения границ при выделении
+    private Double[][] graphicsDataOriginal;
+    public Stack<Double[][]> undoLog = new Stack<>();
+    private int selectedMarker = -1;
+    private Double[][] viewport = new Double[2][2];
+    Double[] originalPoint = new Double[2];
     Double[] finalPoint = new Double[2];
-    boolean scaleMode = false; //для отрисовки выделительного прямоугольника
-    boolean changeMode = false;// для перемещения точек
+    boolean scaleMode = false;
+    boolean changeMode = false;
     boolean changes = false;
-    private final java.awt.geom.Rectangle2D.Double selectionRect = new java.awt.geom.Rectangle2D.Double(); //сам прямоугольник
+    private final java.awt.geom.Rectangle2D.Double selectionRect = new java.awt.geom.Rectangle2D.Double();
     private static final DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance();
     double activate = 1.25;
 
@@ -49,16 +49,16 @@ public class GraphicsDisplay extends JPanel {
     private final BasicStroke selectionStroke;
 
     private final Font axisFont;
-    private final Font labelFont; //шрифт для окошка с координатами при наведении на точку
+    private final Font labelFont;
     private final Font gridFont;
 
-    private double minX, maxX, minY, maxY; //оставил для более простого отката к резету
+    private double minX, maxX, minY, maxY;
     private double scaleX;
     private double scaleY;
 
     public GraphicsDisplay() {
         setBackground(Color.WHITE);
-        selectionStroke = new BasicStroke(1.0F, 0, 0, 10.0F, new float[]{10.0F, 10.0F}, 0.0F); //строка для прямоугольника
+        selectionStroke = new BasicStroke(1.0F, 0, 0, 10.0F, new float[]{10.0F, 10.0F}, 0.0F);
         graphicsStroke = new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
         axisStroke = new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
         axisFont = new Font(Font.SANS_SERIF, Font.PLAIN + Font.ITALIC, 36);
@@ -136,13 +136,6 @@ public class GraphicsDisplay extends JPanel {
             viewport[1][1] = graphicsData[0][1];
             viewport[0][1] = viewport[1][1];
 
-        /*
-        оперируем viewport таким образом чтобы viewport
-        [1][0] - maxX;
-        [1][1] - minY;
-        [0][0] - minX;
-        [0][1] - maxY
-         */
             for (int i = 1; i < graphicsData.length; i++) {
                 if (graphicsData[i][1] < viewport[1][1]) {
                     viewport[1][1] = graphicsData[i][1];
@@ -440,16 +433,13 @@ public class GraphicsDisplay extends JPanel {
             double distance;
             for (Double[] point : graphicsData) {
                 Point2D.Double screenPoint = xyToPoint(point[0], point[1]);
-                if (!turnGraph) {
-                    System.out.println("точка х не поворот  "+screenPoint.getX()+" точка y не поворот "+screenPoint.getY());
+                if (!turnGraph)
                     distance = (screenPoint.getX() - x) * (screenPoint.getX() - x) +
                             (screenPoint.getY() - y) * (screenPoint.getY() - y);
-                }
-                else {
-                    System.out.println("точка х  поворот  "+screenPoint.getX()+" точка y  поворот "+screenPoint.getY());
+                else
                     distance = (screenPoint.getX() - y) * (screenPoint.getX() - y) +
                             (screenPoint.getY() - x) * (screenPoint.getY() - x);
-                }
+
                 if (distance < 100.0)
                     return pos;
                 pos++;
@@ -464,8 +454,8 @@ public class GraphicsDisplay extends JPanel {
 
     public class MouseHandler extends MouseAdapter {
 
-        public void mouseClicked(MouseEvent e) { //При щелчке мышью вызывается метод
-            if (e.getButton() == 3) {//пкм клавиша значит
+        public void mouseClicked(MouseEvent e) {
+            if (e.getButton() == 3) {
                 if (!undoLog.isEmpty())
                     viewport = undoLog.pop();
                 else
@@ -475,7 +465,7 @@ public class GraphicsDisplay extends JPanel {
         }
 
         @Description("Для забора начальных координат при приближении")
-        public void mousePressed(MouseEvent e) { //при нажатии
+        public void mousePressed(MouseEvent e) {
                 if (e.getButton() == 1) {
                     if (!turnGraph) {
                         originalPoint = pointToXY(e.getX(), e.getY());
@@ -487,7 +477,6 @@ public class GraphicsDisplay extends JPanel {
                     }
                     if (selectedMarker >= 0) {
                         changeMode = true;
-                        System.out.println("CHANGE MODE ёпта");
                         setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
                     } else {
                         scaleMode = true;
@@ -501,7 +490,7 @@ public class GraphicsDisplay extends JPanel {
         }
 
         @Description("Для забора координат при приближении")
-        public void mouseReleased(MouseEvent e) { // при отпускании кнопки мыши
+        public void mouseReleased(MouseEvent e) {
             if (e.getButton() == 1) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 if (changeMode){
@@ -526,7 +515,7 @@ public class GraphicsDisplay extends JPanel {
 
     public class MouseMotionHandler implements MouseMotionListener {
 
-        public void mouseDragged(MouseEvent e) { //многократно вызывается при перетаскивании мыши, когда нажата ее левая кнопка
+        public void mouseDragged(MouseEvent e) {
             if (changeMode) {
                 if (!turnGraph) {
                     Double[] currentPoint = pointToXY(e.getX(), e.getY());
@@ -538,7 +527,6 @@ public class GraphicsDisplay extends JPanel {
                     graphicsData[selectedMarker][1] = newY;
                 }
                 else {
-                    System.out.println("мауз дрэггд x"+e.getX()+" y"+(getHeight()-e.getY()));
                     Double[] currentPoint = pointToXY(getHeight()-e.getY(),e.getX());
                     double newX = currentPoint[0];
                     if (newX < viewport[0][0])
@@ -547,7 +535,7 @@ public class GraphicsDisplay extends JPanel {
                         newX = viewport[1][0];
                     graphicsData[selectedMarker][0] = newX;
                 }
-                changes = true; //менюшку допилить этой фигней
+                changes = true;
             } else {
                 double width;
                 double height;
@@ -564,11 +552,7 @@ public class GraphicsDisplay extends JPanel {
             repaint();
         }
 
-        public void mouseMoved(MouseEvent e) { //Обычное перемещение мыши приводит к  многократному вызову метода
-
-            if (!turnGraph)
-                System.out.println("x default-"+e.getX()+"y default-"+e.getY());
-            else  System.out.println("x turned-"+e.getX()+"y turned-"+(getHeight()-e.getY()));
+        public void mouseMoved(MouseEvent e) {
 
             if(!turnGraph)
             selectedMarker = findPoint(e.getX(),e.getY());
@@ -586,8 +570,3 @@ public class GraphicsDisplay extends JPanel {
         }
     }
 }
-
-/*
-что нужно доработать - опускание вниз лейбла когда точка поднимается за экран
-и при ротейте все функции для мышки переделать - как хз))
- */
