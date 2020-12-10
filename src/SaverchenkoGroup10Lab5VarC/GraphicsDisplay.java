@@ -32,7 +32,7 @@ public class GraphicsDisplay extends JPanel {
     boolean changeMode = false;// для перемещения точек
     boolean changes = false;
     private final java.awt.geom.Rectangle2D.Double selectionRect = new java.awt.geom.Rectangle2D.Double(); //сам прямоугольник
-    private static DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance();
+    private static final DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance();
 
     private boolean showAxis = true;
     private boolean showDefaultCondition = false;
@@ -417,10 +417,20 @@ public class GraphicsDisplay extends JPanel {
     protected int findPoint(int x, int y) {
         if (graphicsData != null) {
             int pos = 0;
+            double distance;
             for (Double[] point : graphicsData) {
-                Point2D.Double screenPoint = xyToPoint(point[0], point[1]);
-                double distance = (screenPoint.getX() - x) * (screenPoint.getX() - x) +
-                        (screenPoint.getY() - y) * (screenPoint.getY() - y);
+                if (!turnGraph) {
+                    Point2D.Double screenPoint = xyToPoint(point[0], point[1]);
+                    System.out.println("точка х не поворот  "+screenPoint.getX()+" точка y не поворот "+screenPoint.getY());
+                    distance = (screenPoint.getX() - x) * (screenPoint.getX() - x) +
+                            (screenPoint.getY() - y) * (screenPoint.getY() - y);
+                }
+                else {
+                    Point2D.Double screenPoint = xyToPoint(point[0], point[1]);
+                    System.out.println("точка х  поворот  "+screenPoint.getX()+" точка y  поворот "+screenPoint.getY());
+                    distance = (screenPoint.getX() - y) * (screenPoint.getX() - y) +
+                            (screenPoint.getY() - x) * (screenPoint.getY() - x);
+                }
                 if (distance < 100.0)
                     return pos;
                 pos++;
@@ -454,8 +464,9 @@ public class GraphicsDisplay extends JPanel {
                     else {
                         originalPoint = pointToXY(getHeight() - e.getY(), e.getX());
                     }
-                    if (selectedMarker >= 0 && !turnGraph) {
+                    if (selectedMarker >= 0) {
                         changeMode = true;
+                        System.out.println("CHANGE MODE ёпта");
                         setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
                     } else {
 
@@ -473,7 +484,7 @@ public class GraphicsDisplay extends JPanel {
         public void mouseReleased(MouseEvent e) { // при отпускании кнопки мыши
             if (e.getButton() == 1) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                if (changeMode && !turnGraph){
+                if (changeMode){
                     changeMode = false;
                     selectedMarker = -1;
                     repaint();
@@ -496,22 +507,33 @@ public class GraphicsDisplay extends JPanel {
     public class MouseMotionHandler implements MouseMotionListener {
 
         public void mouseDragged(MouseEvent e) { //многократно вызывается при перетаскивании мыши, когда нажата ее левая кнопка
-            if (changeMode && !turnGraph) {
-                Double[] currentPoint = pointToXY(e.getX(), e.getY());
-                double newY = currentPoint[1];
-                if (newY > viewport[0][1])
-                    newY = viewport[0][1];
-                if (newY < viewport[1][1])
-                    newY = viewport[1][1];
-                graphicsData[selectedMarker][1] = newY;
-                changes = true;
+            if (changeMode) {
+                if (!turnGraph) {
+                    Double[] currentPoint = pointToXY(e.getX(), e.getY());
+                    double newY = currentPoint[1];
+                    if (newY > viewport[0][1])
+                        newY = viewport[0][1];
+                    if (newY < viewport[1][1])
+                        newY = viewport[1][1];
+                    graphicsData[selectedMarker][1] = newY;
+                }
+                else {
+                    System.out.println("мауз дрэггд епта x"+e.getX()+" y"+(getHeight()-e.getY()));
+                    Double[] currentPoint = pointToXY(getHeight() - e.getY(), e.getX());
+                    double newX = currentPoint[0];
+                    if (newX < viewport[0][0])
+                        newX = viewport[0][0];
+                    if (newX > viewport[1][0])
+                        newX = viewport[1][0];
+                    graphicsData[selectedMarker][0] = newX;
+                }
+                changes = true; //менюшку допилить этой фигней
             } else {
                 double width;
                 double height;
                 if(turnGraph){
                     width =  getHeight()-e.getY()  - selectionRect.getX() ;
                     height = e.getX() - selectionRect.getY() ;
-                    System.out.println("ширина-"+width+" высота-"+height);
                 }
                 else {
                     width = e.getX() - selectionRect.getX();
@@ -524,8 +546,18 @@ public class GraphicsDisplay extends JPanel {
 
         public void mouseMoved(MouseEvent e) { //Обычное перемещение мыши приводит к  многократному вызову метода
 
+            if (!turnGraph)
+                System.out.println("x default-"+e.getX()+"y default-"+e.getY());
+            else  System.out.println("x turned-"+e.getX()+"y turned-"+(getHeight()-e.getY()));
+
+            if(!turnGraph)
             selectedMarker = findPoint(e.getX(),e.getY());
-            if (selectedMarker>=0 && !turnGraph)
+            else
+            {
+                selectedMarker = findPoint(e.getX(),getHeight()-e.getY());
+            }
+
+            if (selectedMarker>=0)
                 setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
             else
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
